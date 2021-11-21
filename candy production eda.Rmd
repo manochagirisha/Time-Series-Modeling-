@@ -1,0 +1,102 @@
+---
+title: "EDA and Time Series Model Using US Candy Production Dataset"
+author: "Girisha Manocha"
+date: "November 21, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Synopsis
+
+The objective of this analysis and modeling is to review basic time series theories and do some basic exploration on the dataset as well.
+
+We will be following an ARIMA modeling procedure of the dataset as follows:
+
+1. Perform exploratory data analysis
+2. Decomposition of data
+3. Test the stationarity
+4. Fit a model using an automated algorithm
+5. Calculate forecasts
+
+
+
+#Setup
+##LOAD PACKAGES
+
+```{r, message=FALSE,warning=FALSE}
+library(ggplot2)
+library(ggthemes)
+library(forecast)
+library(tseries)
+```
+
+
+
+##LOAD DATA
+
+```{r, message=FALSE}
+US_candy_production <- read.csv("C:/Users/sai/Desktop/DO NOT TOUCH!!/New folder/st joseph/BDA-sem3/candy_production.csv")
+# Take a look at the class of the dataset US_candy_production
+str(US_candy_production)
+
+# Assign more meaningful variable names
+colnames(US_candy_production)<-c("Period","candy_production")
+
+# Convert data into time series dataset
+attach(US_candy_production)
+candyts<-ts(candy_production,c(1972,1),c(2017,8),12)
+str(candyts)
+
+```
+
+The candy production dataset provides monthly totals of US candy production, from 1972 to August 2017 as a percent of 2012 production. We have now successfully converted this dataset to a time series class therefore no further class or date manipulation is required.
+
+#EDA
+
+To perform exploratory data analysis, let's first review the data with summary statistics and plots in R.
+
+```{r,message=FALSE}
+# Take a peek at the dataset
+candyts
+
+# Check for missing values
+sum(is.na(candyts))
+
+# Check the frequency of the time series data
+frequency(candyts)
+
+# Check the cycle of the time series
+cycle(candyts)
+
+# Review the summary statistics
+summary(candyts)
+
+# Plot the raw data using the base plot function
+plot(candyts,xlab="Year", ylab = "Candy Production as (%) of 2012 Production",main="Monthly US Candy Production from 1972 to 2017")
+```
+
+As an alternative to the base plot function,  we can also use the extension autoplot() function from the ggplot2 package, to directly plot a time series data. The benefits are not having to convert to a dataframe as required with ggplot2, but still having access to the layering grammar of graphics.
+
+```{r, message = FALSE}
+autoplot(candyts) + labs(x ="Year", y = "Candy Production as (%) of 2012 Production", title="Monthly US Candy Production from 1972 to 2017") + theme_classic()
+```
+
+Let's use the boxplot function to see any seasonal effects.
+
+```{r,warning=FALSE,message=FALSE}
+boxplot(candyts~cycle(candyts),xlab="Month", ylab = "Candy Production as (%) of 2012 Production" ,main ="Monthly US Candy Production from 1972 to 2017")
+```
+
+From these exploratory plots, we can make some initial inferences:
+
+The candy production numbers increase over time with each year from 1972 to early 2000's which may be indicative of an increasing linear trend, perhaps due to increasing demand for candies during that time period. However, production seems to slow down during mid to late 2000's, while the trend during the present decade seems to be pretty stagnant.
+Boxplot reveals that candy production is higher in months 10 to 12, having higher means and lower variances than the other months, indicating seasonality with an apparent cycle of 12 months. The rationale for this could be higher demand during halloween and the holiday season since candies are good as a simple present for kids.
+Candy production dataset appears to be a multiplicative time series as the production numbers increase, it appears so does the pattern of seasonality.
+There do not appear to be significant amount of outliers and there are no missing values. Therefore no further data cleaning is required.
+
+<br/>
+<hr/>
+<br/>
